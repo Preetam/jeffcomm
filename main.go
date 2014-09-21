@@ -7,12 +7,22 @@ import (
 	"log"
 	"net/http"
 	"net/http/cookiejar"
+	"net/smtp"
 	"strings"
 )
 
 func main() {
 	username := flag.String("username", "", "Jefferson Commons portal username")
 	password := flag.String("password", "", "Jefferson Commons portal password")
+
+	smtpAddr := flag.String("smtp-addr", "", "Address of the SMTP server")
+	smtpHost := flag.String("smtp-host", "", "")
+	smtpUsername := flag.String("smtp-username", "", "")
+	smtpPassword := flag.String("smtp-password", "", "")
+	sender := flag.String("sender", "", "")
+	mailTo := flag.String("mail-to", "", "")
+
+	forceEmail := flag.Bool("force-send-email", false, "")
 	flag.Parse()
 
 	jar, err := cookiejar.New(nil)
@@ -57,6 +67,27 @@ func main() {
 			var f float32
 			fmt.Sscanf(line[strings.Index(line, "$"):], "$%f", &f)
 			fmt.Printf("\nOur balance is $%.2f\n", f)
+
+			if f <= 0 && !*forceEmail {
+				break
+			}
+
+			smtpAuth := smtp.PlainAuth("", *smtpUsername, *smtpPassword, *smtpHost)
+			to := strings.Split(*mailTo, ",")
+
+			log.Println("sending mail to ", to, "with the following auth ", smtpAuth)
+
+			err := smtp.SendMail(*smtpAddr, smtpAuth, *sender, to, []byte(fmt.Sprintf(`From: %s
+To: %s
+Subject: Jefferson Commons Balance
+
+Hello! Our Jefferson Commons balance is $%.2f. Remember to pay it on time!
+`, *sender, *mailTo, f)))
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			break
 		}
 	}
