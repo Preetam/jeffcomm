@@ -8,8 +8,21 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/smtp"
+	"regexp"
 	"strings"
 )
+
+func parseBalance(line string) float32 {
+	reg := regexp.MustCompile(`-?[$][\d,]+[.]\d\d`)
+	str := reg.FindString(line)
+
+	invalidReg := regexp.MustCompile(`[$,]`)
+	str = invalidReg.ReplaceAllString(str, "")
+
+	f := float32(0)
+	fmt.Sscanf(str, "%f", &f)
+	return f
+}
 
 func main() {
 	username := flag.String("username", "", "Jefferson Commons portal username")
@@ -64,8 +77,8 @@ func main() {
 	for scan.Scan() {
 		line := scan.Text()
 		if strings.Contains(line, "Your Balance:") {
-			var f float32
-			fmt.Sscanf(line[strings.Index(line, "$"):], "$%f", &f)
+			f := parseBalance(line)
+
 			fmt.Printf("\nOur balance is $%.2f\n", f)
 
 			if f <= 0 && !*forceEmail {
