@@ -64,7 +64,7 @@ func main() {
 
 	res.Body.Close()
 
-	res, err = client.Get("https://jeffersoncommons.residentportal.com/resident_portal/?module=home")
+	res, err = client.Get("https://jeffersoncommons.residentportal.com/resident_portal/?module=home&action=show_resident_alert_balance&lease_status[type_id]=4")
 	if err != nil {
 		log.Fatal(err)
 	}
